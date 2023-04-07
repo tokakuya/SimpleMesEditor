@@ -1,0 +1,71 @@
+﻿.tr-serifu {
+    height: 250px;
+    max-height: 300px;
+    width: 100%;
+    /*overflow-wrap: normal;*/
+    padding-top: 4px;
+    resize: vertical;
+}
+
+td > div {
+    white-space: pre-wrap;
+}
+
+td {
+    border: double gray;
+    font-family: 'geneikoburi';
+}
+
+th {
+    border: double gray;
+    font-family: 'geneikoburi';
+}
+
+.indent {
+    margin-left: 1em;
+}
+
+.tr-chara {
+    height: 100px;
+    max-height: 300px;
+    width: 100%;
+    overflow-wrap: break-word;
+    padding-top: 4px;
+}
+
+.tr-count {
+    height: 60px;
+    max-height: 300px;
+    width: 100%;
+    overflow-wrap: normal;
+    padding-top: 4px;
+}
+
+.tr-sound {
+    height: 150px;
+    max-height: 300px;
+    width: 100%;
+    overflow-wrap: break-word;
+    padding-top: 4px;
+}
+
+.tr-wordCount {
+    width: 100%;
+    overflow-wrap: break-word;
+    padding-top: 4px;
+}
+
+.tate {
+    writing-mode: vertical-rl;
+    text-combine-upright: 3;
+    text-orientation: upright;
+    text-align: left;
+}
+
+table {
+    resize: both;
+}
+
+.resize {
+    resize: both;
+}

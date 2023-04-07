@@ -1,0 +1,405 @@
+﻿@page "/"
+@using Mes;
+@using Mes.core;
+@using Mes.Extension;
+@using System.Collections.Generic;
+@using Radzen;
+@using Sample;
+@using Microsoft.JSInterop;
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.RichTextEditor;
+
+
+<div>
+    <h3>Simple Mes Editor</h3>        
+    <div style="overflow-x:auto; @CheckShow("Daihon");">
+        <table style="border-style: double;" class="">
+            <tr class="tate" style="@CheckShow("Comment");">
+                <td class="tr-sound resize" style="visibility:hidden;" id="kakushi">
+                    <div>かくし</div>
+                </td>
+                @foreach (var section in mes.body.sections.Reverse())
+                {
+                    foreach (var piece in section.pieces.Reverse())
+                    {
+                        <td class="tate tr-sound">
+                            <div>
+                                @(
+                                    ($"{piece.comments}\n{piece.sound_note}".Trim() + "\n" + piece.sound_position).Trim()
+                                )
+                            </div>
+                        </td>
+                    }
+                }
+                <td class="tate tr-sound" id="togaki"><div>ト書き</div></td>
+            </tr>
+            <tr class="tate" style="@CheckShow("Charactor")">
+                <td class="tr-chara" style="visibility:hidden;">
+                    <div>かくし</div>
+                </td>
+                @foreach (var section in mes.body.sections.Reverse())
+                {
+                    foreach( var piece in section.pieces.Reverse())
+                    {
+                        <td class="tate tr-chara">
+                            <div>@piece.charactor</div>
+                        </td>
+                    }
+                }
+
+                <td class="tate tr-chara"><div>人物</div></td>
+            </tr>
+            <tr style="@CheckShow("Serifu")">
+                <td class="tr-sound" style="visibility:hidden;">
+                    <div>かくし</div>
+                </td>
+                @foreach (var section in mes.body.sections.Reverse())
+                {
+                    foreach (var piece in section.pieces.Reverse())
+                    {
+                        <td class="tate tr-serifu">
+                            <div>@piece.dialogue</div>
+                        </td>
+                    }
+                }
+
+                <td class="tate tr-serifu"><div>セリフ</div></td>
+            </tr>
+            <tr style="@CheckShow("WordNum")">
+                <td class="tr-wordCount" style="visibility:hidden;">
+                    <div>かくし</div>
+                </td>
+                @foreach (var section in mes.body.sections.Reverse())
+                {
+                    foreach(var piece in section.pieces.Reverse())
+                    {
+                        <td class="tr-count" style="text-align:center;">
+                            <!--　TODO: 除外文字列を集計しないように関数に集約する -->
+                            <div>@piece.dialogue.Length</div>
+                        </td>
+
+                    }
+                }
+
+                <td class="tate tr-count"><div>文字数</div></td>
+            </tr>
+            <tr style="@CheckShow("Timing")">
+                <td class="tr-wordCount" style="text-align:center; visibility:hidden;">
+                    <div>かくし</div>
+                </td>
+                @foreach(var section in mes.body.sections.Reverse())
+                {
+                    foreach(var piece in section.pieces.Reverse())
+                    {
+                        <td class="tr-sound" style="text-align:center;">
+                            <div>@piece.timing</div>
+                        </td>
+                    }
+                }
+                <td class="tate tr-sound"><div>タイミング情報</div></td>
+            </tr>
+        </table>
+    </div>
+    
+    <!--
+    <InputFile OnChange="@onLoadFiles" />
+    -->
+    <button @onclick="GoScrollLeft">←左端にいく</button><button @onclick="GoScrollRight">右端にいく→</button>
+    <details>
+        <summary style="text-align: left;">詳細</summary>
+        <div class="indent">
+            <details open>
+                <summary style="text-align: left;">台本の表示設定</summary>
+                <RadzenCheckBox @bind-Value=@showConf["Comment"] Name="Comment" TValue="bool" />
+                <RadzenLabel Text="ト書き" Component="Comment" Style="margin-left: 8px; vertical-align: middle;" />
+                <RadzenCheckBox @bind-Value=@showConf["Charactor"] Name="Charactor" TValue="bool" />
+                <RadzenLabel Text="人物" Component="Charactor" Style="margin-left: 8px; vertical-align: middle;" />
+                <RadzenCheckBox @bind-Value=@showConf["Serifu"] Name="Serifu" TValue="bool" />
+                <RadzenLabel Text="セリフ" Component="Serifu" Style="margin-left: 8px; vertical-align: middle;" />
+                <RadzenCheckBox @bind-Value=@showConf["WordNum"] Name="WordNum" TValue="bool" />
+                <RadzenLabel Text="文字数" Component="WordNum" Style="margin-left: 8px; vertical-align: middle;" />
+                <RadzenCheckBox @bind-Value=@showConf["Timing"] Name="Timing" TValue="bool" />
+                <RadzenLabel Text="タイミング" Component="Timing" Style="margin-left: 8px; vertical-align: middle;" />
+                <div style="display:none;">ShowConf:@showConf.ToJson().ToString()</div>
+            </details>
+            <details open>
+                <summary style="text-align: left;">セリフの集計</summary>
+                <table border="1">
+                    <thead class="word-count">
+                        <tr>
+                            <th>名前</th>
+                            <th>文字数</th>
+                        </tr>
+                    </thead>
+                    @foreach (KeyValuePair<string, int> kvp in mes.GetDialogueTextCount(builder.MesConfig))
+                    {
+                        <tr>
+                            <td>@kvp.Key</td>
+                            <td style="text-align: right;">@kvp.Value</td>
+                        </tr>
+                    }
+                </table>
+            </details>
+            <details open>
+                <summary style="text-align: left;">便利なボタン</summary>
+                <div>
+                    <button @onclick="()=> CopyToClipboard(mes.ToJson())">JSON形式をコピー</button>
+                    <button @onclick="()=> CopyToClipboard(mes.ExportCSV())">CSV(TSV)形式をコピー</button>
+                    <button @onclick="()=> CopyToClipboard(mes.ExportCSVForASMRDaihon())">台本Excel形式をコピー</button>
+                    <button @onclick="()=> CopyToClipboard(String.Join('\n', mes.ToChatStyleHTML()))">ChatStyle形式をコピー</button>
+                    <button @onclick="()=> CopyToClipboard(mes.ExportDaihon4YukkuriMovieMaker())">ゆっくりMovieMaker用CSVをコピー</button>
+                </div>
+            </details>
+            <br/>
+        </div>
+    </details>
+    <RadzenTextArea style="width:100%; height:160px;" @bind-Value=@mesText @oninput="onInputTextEvent"></RadzenTextArea>
+    <div>
+        <label for="sample">サンプルテキスト</label>
+        <select name="languages" @onchange="OnSelectChanged" id="sample">
+            <option value=@SampleText.nika1>ニカ先生のMes講座１</option>
+            <option value=@SampleText.yunano0>ゆなの０</option>
+            <option value=@SampleText.yunano1>ゆなの１</option>
+            <option value=@SampleText.mermaid>[研究中]分岐図のサンプル</option>
+        </select>
+    </div>
+
+    <details open>
+        <summary style="text-align: left;">デバッグ情報</summary>
+        <div>
+            <ul>
+                <details>
+                    <summary style="text-align: left;">Config</summary>
+                    <div style="white-space:pre-wrap;">
+                        @builder.MesConfig.ToJson(true)
+                    </div>
+                </details>
+            </ul>
+            <ul>
+                <details>
+                    <summary style="text-align: left;">JSON</summary>
+                    <div style="white-space:pre-wrap;">
+                        @mes.ToJson()
+                    </div>
+                </details>
+            </ul>
+            <ul>
+                <details>
+                    <summary style="text-align: left;">TSV(Pieces)</summary>
+                    <div style="white-space:pre-wrap;">
+                        @mes.ExportCSV()
+                    </div>
+                </details>
+            </ul>
+            <ul>
+                <details>
+                    <summary style="text-align: left;">台本Excel形式</summary>
+                    <div style="white-space:pre-wrap;">
+                        @mes.ExportCSVForASMRDaihon()
+                    </div>
+                </details>
+            </ul>
+            <ul>
+                <details>
+                    <summary style="text-align: left;">ChatStyle</summary>
+                    <div style="white-space:pre-wrap;">
+                        @foreach (var line in mes.ToChatStyleHTML())
+                        {
+                            <div>@line</div>
+                        }
+                    </div>
+                </details>
+            </ul>
+            <ul>
+                <details>
+                    <summary style="text-align: left;">ゆっくりMovieMaker用CSV</summary>
+                    <div>
+                        <textarea readonly style="width:100%; height:300px; white-space:pre-wrap;">
+                            @mes.ExportDaihon4YukkuriMovieMaker()
+                                </textarea>
+                    </div>
+                </details>
+            </ul>
+            <ul>
+                <details>
+                    <summary style="text-align: left;">(テスト中)分岐グラフ用のMermaid</summary>
+                    <div>
+                        <b>?choose:ルート１を選ぶ,jump:ルート1,</b>のように書くとMermaid形式に変換されます。
+                        詳細はサンプルの分岐図のサンプルを見てください。
+                    </div>
+                    <div>
+                        <textarea readonly style="width:100%; height:300px; white-space:pre-wrap;">
+                            @mes.ExportMermaid()
+                                </textarea>
+                    </div>
+                </details>
+            </ul>
+            <ul>
+                <details>
+                    <summary style="text-align: left;">(テスト中)分岐グラフ用のPlantUML</summary>
+                    <div>
+                        <b>?choose:ルート１を選ぶ,jump:ルート1,</b>のように書くとPlantUML形式に変換されます。
+                        詳細はサンプルの分岐図のサンプルを見てください。
+                    </div>
+                    <div>
+                        <textarea readonly style="width:100%; height:300px; white-space:pre-wrap;">
+                            @mes.ExportPlantUML()
+                                </textarea>
+                    </div>
+                </details>
+            </ul>
+            <ul>
+                <details>
+                    <summary style="text-align: left;">(テスト中)Mesテキストへの再変換</summary>
+                    <div>
+                    </div>
+                    <div>
+                        <textarea readonly style="width:100%; height:300px; white-space:pre-wrap;">
+                            @mes.ExportMesText(builder.MesConfig)
+                                </textarea>
+                    </div>
+                </details>
+            </ul>
+            <ul>
+                <details>
+                    <summary style="text-align: left;">(テスト中)台本テキストへの変換</summary>
+                    <div>
+                    </div>
+                    <div>
+                        <textarea readonly style="width:100%; height:300px; white-space:pre-wrap;">
+                            @mes.ExportDaihonText()
+                                </textarea>
+                    </div>
+                </details>
+            </ul>
+        </div>
+    </details>
+    <!--
+    <SfRichTextEditor ShowCharCount="true" AutoSaveOnIdle="true">
+        <RichTextEditorToolbarSettings Items="@Tools" />
+    </SfRichTextEditor>
+    -->
+</div>
+
+
+@code {
+    [Inject]
+    internal IJSRuntime JSRuntime { get; set; } = default!;
+    internal static string mesText = SampleText.nika1;
+    internal static MesBuilder builder = new MesBuilder(mesText.Replace("\r\n","\n")); //.MergeMesConfig("{'name':'2nd'}");
+    internal static Mes mes = builder.Build();
+    internal string mesJsonStr = mes.ToJson();
+    //internal Dictionary<string,int> wordCount = mes.GetDialogueTextCount(builder.MesConfig);
+
+    internal string mesCSVForASMRDaihon = mes.ExportCSVForASMRDaihon();
+    internal string mesCSV = mes.ExportCSV();
+    internal Dictionary<string, bool> showConf = new Dictionary<string, bool>{
+        { "Comment", true },
+        { "Charactor", true },
+        { "Serifu", true },
+        { "WordNum", true },
+        { "Timing", false },
+        { "SoundNote", true },
+        { "SoundPosition", true },
+        { "Daihon", true }
+    };
+
+
+
+    public void OnSelectChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+
+        if (e.Value is not null)
+        {
+            mesText = e.Value.ToString().Replace("\r\n", "\n").Replace("\r", "\n");
+            onInputText();
+            StateHasChanged();
+            //System.Threading.Thread.Sleep(700);
+        }
+    }
+
+    public void GoScrollRight()
+    {
+        JSRuntime.InvokeAsync<bool>("scrollToElementId", "togaki");
+    }
+    public void GoScrollLeft()
+    {
+        JSRuntime.InvokeAsync<bool>("scrollToElementId", "kakushi");
+    }
+
+    public void CopyToClipboard(string text)
+    {
+        JSRuntime.InvokeAsync<bool>("window.clipboardCopy", text);
+        //await JSRuntime.InvokeVoidAsync("alert('クリップボードにコピーしました')");
+
+    }
+
+    public void SaveText(string text)
+    {
+
+    }
+
+    string CheckShow(string param)
+    {
+        return showConf[param] == false ? "display:none;" : "";
+    }
+
+    void onInputTextEvent(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        builder.RawText = e.Value.ToString().Replace("\r\n","\n").Replace("\r","\n");
+        mes = builder.Build();
+        mesJsonStr = mes.ToJson(true);
+        mesCSVForASMRDaihon = mes.ExportCSVForASMRDaihon();
+        mesCSV = mes.ExportCSV();
+    }
+
+    void onInputText()
+    {
+        builder.RawText = mesText;
+        mes = builder.Build();
+        mesJsonStr = mes.ToJson(true);
+        mesCSVForASMRDaihon = mes.ExportCSVForASMRDaihon();
+        mesCSV = mes.ExportCSV();
+        //mes.body.sections.Select(v => v.pieces)
+    }
+
+    private async void copyCSVForASMRDaihon()
+    {
+        /*
+        await Clipboard.SetTextAsync(mesCSVForASMRDaihon);
+        await Application.Current.MainPage.DisplayAlert("", "コピーしました", "OK");
+        */
+    }
+    private async void copyCSV()
+    {
+        //await Clipboard.SetTextAsync(mesCSV);
+        //await Application.Current.MainPage.DisplayAlert("", "コピーしました", "OK");
+    }
+
+    private void syncConfig()
+    {
+        //mesConfig = builder.MesConfig.ToJson();
+    }
+
+    /*
+    private List<ToolbarItemModel> Tools = new List<ToolbarItemModel>()
+        {
+        new ToolbarItemModel() { Command = ToolbarCommand.Bold },
+        new ToolbarItemModel() { Command = ToolbarCommand.Italic },
+        new ToolbarItemModel() { Command = ToolbarCommand.Underline },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.Formats },
+        new ToolbarItemModel() { Command = ToolbarCommand.Alignments },
+        new ToolbarItemModel() { Command = ToolbarCommand.OrderedList },
+        new ToolbarItemModel() { Command = ToolbarCommand.UnorderedList },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.CreateLink },
+        new ToolbarItemModel() { Command = ToolbarCommand.Image },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.SourceCode },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.Undo },
+        new ToolbarItemModel() { Command = ToolbarCommand.Redo }
+    };
+    */
+}
