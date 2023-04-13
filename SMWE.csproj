@@ -18,8 +18,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.3" PrivateAssets="all" />
+    <PackageReference Include="PlantUml.Net" Version="1.4.80" />
     <PackageReference Include="Radzen.Blazor" Version="4.8.0" />
     <PackageReference Include="Syncfusion.Blazor" Version="21.1.38" />
+    <PackageReference Include="Syncfusion.DocIO.Net.Core" Version="21.1.39" />
+    <PackageReference Include="Syncfusion.DocIORenderer.Net.Core" Version="21.1.39" />
   </ItemGroup>
 
   <ItemGroup>

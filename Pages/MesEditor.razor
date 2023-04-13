@@ -8,6 +8,9 @@
 @using Microsoft.JSInterop;
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.RichTextEditor;
+@using PlantUml.Net;
+@using Syncfusion.DocIO.DLS;
+@using Syncfusion.DocIO;
 
 
 <div>
@@ -139,7 +142,7 @@
                         </tr>
                     }
                 </table>
-            </details>
+            </details>        
             <details open>
                 <summary style="text-align: left;">便利なボタン</summary>
                 <div>
@@ -148,6 +151,7 @@
                     <button @onclick="()=> CopyToClipboard(mes.ExportCSVForASMRDaihon())">台本Excel形式をコピー</button>
                     <button @onclick="()=> CopyToClipboard(String.Join('\n', mes.ToChatStyleHTML()))">ChatStyle形式をコピー</button>
                     <button @onclick="()=> CopyToClipboard(mes.ExportDaihon4YukkuriMovieMaker())">ゆっくりMovieMaker用CSVをコピー</button>
+                    <button @onclick="()=> SaveWordDocument()">Wordを保存</button>
                 </div>
             </details>
             <br/>
@@ -246,6 +250,10 @@
                             @mes.ExportPlantUML()
                                 </textarea>
                     </div>
+                    <button @onclick="GenerateSVGFromPlantUML">SVGを生成</button>
+                    <div>
+                        <img src="@svg" />
+                    </div>
                 </details>
             </ul>
             <ul>
@@ -290,7 +298,7 @@
     internal static Mes mes = builder.Build();
     internal string mesJsonStr = mes.ToJson();
     //internal Dictionary<string,int> wordCount = mes.GetDialogueTextCount(builder.MesConfig);
-
+    internal string svg = "no svg";
     internal string mesCSVForASMRDaihon = mes.ExportCSVForASMRDaihon();
     internal string mesCSV = mes.ExportCSV();
     internal Dictionary<string, bool> showConf = new Dictionary<string, bool>{
@@ -304,7 +312,20 @@
         { "Daihon", true }
     };
 
+    public async void GenerateSVGFromPlantUML()
+    {
+        var factory = new RendererFactory();
+        var renderer = factory.CreateRenderer(new PlantUmlSettings()
+        {
+                RemoteUrl = "https://www.plantuml.com/plantuml/"
+        });
 
+        var bytes = await renderer.RenderAsync(mes.ExportPlantUML(), OutputFormat.Svg);
+        var uri = renderer.RenderAsUri(mes.ExportPlantUML(), OutputFormat.Svg);
+        //svg = System.Text.Encoding.UTF8.GetString(bytes);
+        svg = uri.ToString();
+        StateHasChanged();
+    }
 
     public void OnSelectChanged(Microsoft.AspNetCore.Components.ChangeEventArgs e)
     {
@@ -325,6 +346,23 @@
     public void GoScrollLeft()
     {
         JSRuntime.InvokeAsync<bool>("scrollToElementId", "kakushi");
+    }
+
+    public async void SaveWordDocument()
+    {
+        WordDocument document;
+        document = new WordDocument();
+        IWSection section = document.AddSection();
+        section.PageSetup.Orientation = PageOrientation.Portrait;
+        section.PageSetup.MirrorMargins = true;
+        section.PageSetup.VerticalAlignment = PageAlignment.Top;
+        section.PageSetup.TextDirection = TextDirection.RightToLeft;
+
+        IWParagraph paragraph = section.AddParagraph();
+        paragraph.AppendText("縦書きのサンプルテキスト");
+
+        document.Save("Sample.docx", FormatType.Docx);
+
     }
 
     public void CopyToClipboard(string text)

@@ -22,13 +22,13 @@ git checkout --orphan gh-pages
 
 #>
 if (Test-Path $PSScriptRoot\docs) {
-	Remove-Item $PSScriptRoot\docs -Recurse
+	Remove-Item $PSScriptRoot\docs\* -Recurse
 }
 
 dotnet publish --self-contained
 
 #Remove-Item $PSScriptRoot\docs -Recursew
-Copy-Item -Recurse $pubdir\wwwroot .\docs
+Copy-Item -Recurse $pubdir\wwwroot\* .\docs
 
 #Copy-Item -Recurse $pubdir\wwwroot $PSScriptRoot\.\docs
 
@@ -38,6 +38,7 @@ Copy-Item $PSScriptRoot\CNAME $PSScriptRoot\docs\
 
 cd $PSScriptRoot\docs
 
+Remove-Item .git -Recurse
 git init
 git branch -D gh-pages
 git checkout --orphan gh-pages
